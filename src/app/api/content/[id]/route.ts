@@ -1,13 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCollection, Collections, ContentDocument, ObjectId } from "@/lib/mongodb";
+import { getCollection, Collections, ContentDocument, ObjectId, isMongoConfigured } from "@/lib/mongodb";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 // GET - Fetch single content by ID
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  if (!isMongoConfigured()) {
+    return NextResponse.json(
+      { error: "Database not configured" },
+      { status: 503 }
+    );
+  }
+
   try {
     const collection = await getCollection<ContentDocument>(Collections.CONTENT);
     
@@ -41,6 +49,10 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  if (!isMongoConfigured()) {
+    return NextResponse.json({ success: true, message: "Mock update - Database not configured" });
+  }
+
   try {
     const body = await request.json();
     const collection = await getCollection<ContentDocument>(Collections.CONTENT);
@@ -49,7 +61,6 @@ export async function PATCH(
       updatedAt: new Date(),
     };
 
-    // Only update provided fields
     if (body.title !== undefined) updateData.title = body.title;
     if (body.content !== undefined) updateData.content = body.content;
     if (body.status !== undefined) updateData.status = body.status;
@@ -97,6 +108,10 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  if (!isMongoConfigured()) {
+    return NextResponse.json({ success: true, message: "Mock delete - Database not configured" });
+  }
+
   try {
     const collection = await getCollection<ContentDocument>(Collections.CONTENT);
     
@@ -120,4 +135,3 @@ export async function DELETE(
     );
   }
 }
-

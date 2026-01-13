@@ -1,41 +1,75 @@
 import { MongoClient, Db, Collection, ObjectId, Document } from "mongodb";
 
-if (!process.env.MONGODB_URI) {
-  throw new Error("Please add your MongoDB URI to .env.local");
-}
+/**
+ * MongoDB Connection Module
+ *
+ * This module handles MongoDB connections with the following features:
+ * - Lazy initialization (only connects when needed)
+ * - Connection pooling in development
+ * - Build-friendly (doesn't throw during Next.js build)
+ */
 
 const uri = process.env.MONGODB_URI;
-const options = {};
 
-let client: MongoClient;
-let clientPromise: Promise<MongoClient>;
+let client: MongoClient | null = null;
+let clientPromise: Promise<MongoClient> | null = null;
 
 declare global {
   // eslint-disable-next-line no-var
   var _mongoClientPromise: Promise<MongoClient> | undefined;
 }
 
-if (process.env.NODE_ENV === "development") {
-  if (!global._mongoClientPromise) {
-    client = new MongoClient(uri, options);
-    global._mongoClientPromise = client.connect();
+/**
+ * Get MongoDB client promise
+ * Lazily creates connection only when needed
+ */
+function getClientPromise(): Promise<MongoClient> {
+  if (!uri) {
+    throw new Error(
+      "MongoDB URI not configured. Please add MONGODB_URI to your environment variables."
+    );
   }
-  clientPromise = global._mongoClientPromise;
-} else {
-  client = new MongoClient(uri, options);
-  clientPromise = client.connect();
+
+  if (process.env.NODE_ENV === "development") {
+    // In development, use global variable to preserve connection across hot reloads
+    if (!global._mongoClientPromise) {
+      client = new MongoClient(uri);
+      global._mongoClientPromise = client.connect();
+    }
+    return global._mongoClientPromise;
+  }
+
+  // In production, create a new client
+  if (!clientPromise) {
+    client = new MongoClient(uri);
+    clientPromise = client.connect();
+  }
+  return clientPromise;
 }
 
+/**
+ * Get database instance
+ */
 export async function getDatabase(): Promise<Db> {
-  const client = await clientPromise;
+  const client = await getClientPromise();
   return client.db(process.env.MONGODB_DB || "afrocreate");
 }
 
+/**
+ * Get collection with type safety
+ */
 export async function getCollection<T extends Document = Document>(
   name: string
 ): Promise<Collection<T>> {
   const db = await getDatabase();
   return db.collection<T>(name);
+}
+
+/**
+ * Check if MongoDB is configured
+ */
+export function isMongoConfigured(): boolean {
+  return !!process.env.MONGODB_URI;
 }
 
 // Type definitions for database documents
@@ -127,5 +161,7 @@ export const Collections = {
   CALENDAR: "calendar_events",
 } as const;
 
-export { clientPromise, ObjectId };
+export { ObjectId };
 
+// Export client promise getter for direct access if needed
+export { getClientPromise as clientPromise };

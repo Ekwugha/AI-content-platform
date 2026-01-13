@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getCollection, Collections, TeamDocument, UserDocument, ObjectId } from "@/lib/mongodb";
+import { getCollection, Collections, TeamDocument, UserDocument, ObjectId, isMongoConfigured } from "@/lib/mongodb";
 
 export interface InviteTeamMemberInput {
   email: string;
@@ -10,6 +10,11 @@ export interface InviteTeamMemberInput {
 }
 
 export async function inviteTeamMember(input: InviteTeamMemberInput) {
+  if (!isMongoConfigured()) {
+    console.log("👥 Mock: Inviting team member -", input.email);
+    return { success: true, message: "Mock invite - Database not configured" };
+  }
+
   try {
     const usersCollection = await getCollection<UserDocument>(Collections.USERS);
     
@@ -26,7 +31,7 @@ export async function inviteTeamMember(input: InviteTeamMemberInput) {
     // Create pending user
     const userDoc: Omit<UserDocument, "_id"> = {
       email: input.email,
-      name: input.email.split("@")[0], // Temporary name
+      name: input.email.split("@")[0],
       role: input.role,
       teamId: input.teamId ? new ObjectId(input.teamId) : undefined,
       createdAt: new Date(),
@@ -39,8 +44,6 @@ export async function inviteTeamMember(input: InviteTeamMemberInput) {
     };
 
     await usersCollection.insertOne(userDoc as UserDocument);
-    
-    // In production, send invitation email here
     
     revalidatePath("/dashboard/team");
     
@@ -58,6 +61,11 @@ export async function updateTeamMemberRole(
   userId: string,
   newRole: "admin" | "editor" | "viewer"
 ) {
+  if (!isMongoConfigured()) {
+    console.log("👥 Mock: Updating team member role -", userId, newRole);
+    return { success: true, message: "Mock update" };
+  }
+
   try {
     const usersCollection = await getCollection<UserDocument>(Collections.USERS);
     
@@ -84,6 +92,11 @@ export async function updateTeamMemberRole(
 }
 
 export async function removeTeamMember(userId: string) {
+  if (!isMongoConfigured()) {
+    console.log("👥 Mock: Removing team member -", userId);
+    return { success: true, message: "Mock remove" };
+  }
+
   try {
     const usersCollection = await getCollection<UserDocument>(Collections.USERS);
     
@@ -102,13 +115,18 @@ export async function removeTeamMember(userId: string) {
 }
 
 export async function createTeam(name: string) {
+  if (!isMongoConfigured()) {
+    console.log("👥 Mock: Creating team -", name);
+    return { success: true, id: "mock-" + Date.now(), message: "Mock create" };
+  }
+
   try {
     const teamsCollection = await getCollection<TeamDocument>(Collections.TEAMS);
     
     const teamDoc: Omit<TeamDocument, "_id"> = {
       name,
       slug: name.toLowerCase().replace(/\s+/g, "-"),
-      ownerId: new ObjectId(), // In production, get from auth session
+      ownerId: new ObjectId(),
       members: [],
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -128,4 +146,3 @@ export async function createTeam(name: string) {
     };
   }
 }
-

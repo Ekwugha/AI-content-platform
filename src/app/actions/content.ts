@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getCollection, Collections, ContentDocument, ObjectId } from "@/lib/mongodb";
-import { generateId, slugify, calculateReadingTime, calculateReadabilityScore } from "@/lib/utils";
+import { getCollection, Collections, ContentDocument, ObjectId, isMongoConfigured } from "@/lib/mongodb";
+import { slugify, calculateReadingTime, calculateReadabilityScore } from "@/lib/utils";
 
 export interface CreateContentInput {
   title: string;
@@ -15,6 +15,16 @@ export interface CreateContentInput {
 }
 
 export async function createContent(input: CreateContentInput) {
+  // Return mock success if MongoDB is not configured
+  if (!isMongoConfigured()) {
+    console.log("📝 Mock: Creating content -", input.title);
+    return {
+      success: true,
+      id: "mock-" + Date.now(),
+      message: "Mock save - Database not configured",
+    };
+  }
+
   try {
     const collection = await getCollection<ContentDocument>(Collections.CONTENT);
     
@@ -26,7 +36,7 @@ export async function createContent(input: CreateContentInput) {
       content: input.content,
       type: input.type,
       status: "draft",
-      authorId: new ObjectId(), // In production, get from auth session
+      authorId: new ObjectId(),
       metadata: {
         keywords: input.keywords || [],
         seoTitle: input.seoTitle,
@@ -62,6 +72,11 @@ export async function updateContent(
   id: string,
   updates: Partial<CreateContentInput> & { status?: string }
 ) {
+  if (!isMongoConfigured()) {
+    console.log("📝 Mock: Updating content -", id);
+    return { success: true, message: "Mock update" };
+  }
+
   try {
     const collection = await getCollection<ContentDocument>(Collections.CONTENT);
     
@@ -109,6 +124,11 @@ export async function updateContent(
 }
 
 export async function deleteContent(id: string) {
+  if (!isMongoConfigured()) {
+    console.log("📝 Mock: Deleting content -", id);
+    return { success: true, message: "Mock delete" };
+  }
+
   try {
     const collection = await getCollection<ContentDocument>(Collections.CONTENT);
     
@@ -128,6 +148,11 @@ export async function deleteContent(id: string) {
 }
 
 export async function publishContent(id: string) {
+  if (!isMongoConfigured()) {
+    console.log("📝 Mock: Publishing content -", id);
+    return { success: true, message: "Mock publish" };
+  }
+
   try {
     const collection = await getCollection<ContentDocument>(Collections.CONTENT);
     
@@ -156,6 +181,11 @@ export async function publishContent(id: string) {
 }
 
 export async function scheduleContent(id: string, scheduledAt: Date) {
+  if (!isMongoConfigured()) {
+    console.log("📝 Mock: Scheduling content -", id, scheduledAt);
+    return { success: true, message: "Mock schedule" };
+  }
+
   try {
     const collection = await getCollection<ContentDocument>(Collections.CONTENT);
     
@@ -184,6 +214,11 @@ export async function scheduleContent(id: string, scheduledAt: Date) {
 }
 
 export async function duplicateContent(id: string) {
+  if (!isMongoConfigured()) {
+    console.log("📝 Mock: Duplicating content -", id);
+    return { success: true, id: "mock-" + Date.now(), message: "Mock duplicate" };
+  }
+
   try {
     const collection = await getCollection<ContentDocument>(Collections.CONTENT);
     
@@ -224,4 +259,3 @@ export async function duplicateContent(id: string) {
     };
   }
 }
-

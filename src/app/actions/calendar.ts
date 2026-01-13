@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getCollection, Collections, CalendarEventDocument, ObjectId } from "@/lib/mongodb";
+import { getCollection, Collections, CalendarEventDocument, ObjectId, isMongoConfigured } from "@/lib/mongodb";
 
 export interface CreateCalendarEventInput {
   title: string;
@@ -11,6 +11,15 @@ export interface CreateCalendarEventInput {
 }
 
 export async function createCalendarEvent(input: CreateCalendarEventInput) {
+  if (!isMongoConfigured()) {
+    console.log("📅 Mock: Creating calendar event -", input.title);
+    return {
+      success: true,
+      id: "mock-" + Date.now(),
+      message: "Mock save - Database not configured",
+    };
+  }
+
   try {
     const collection = await getCollection<CalendarEventDocument>(Collections.CALENDAR);
     
@@ -20,7 +29,7 @@ export async function createCalendarEvent(input: CreateCalendarEventInput) {
       type: input.type,
       status: "pending",
       contentId: input.contentId ? new ObjectId(input.contentId) : undefined,
-      authorId: new ObjectId(), // In production, get from auth session
+      authorId: new ObjectId(),
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -46,6 +55,11 @@ export async function updateCalendarEvent(
   id: string,
   updates: Partial<CreateCalendarEventInput> & { status?: string }
 ) {
+  if (!isMongoConfigured()) {
+    console.log("📅 Mock: Updating calendar event -", id);
+    return { success: true, message: "Mock update" };
+  }
+
   try {
     const collection = await getCollection<CalendarEventDocument>(Collections.CALENDAR);
     
@@ -76,6 +90,11 @@ export async function updateCalendarEvent(
 }
 
 export async function moveCalendarEvent(id: string, newDate: string) {
+  if (!isMongoConfigured()) {
+    console.log("📅 Mock: Moving calendar event -", id, "to", newDate);
+    return { success: true, message: "Mock move" };
+  }
+
   try {
     const collection = await getCollection<CalendarEventDocument>(Collections.CALENDAR);
     
@@ -102,6 +121,11 @@ export async function moveCalendarEvent(id: string, newDate: string) {
 }
 
 export async function deleteCalendarEvent(id: string) {
+  if (!isMongoConfigured()) {
+    console.log("📅 Mock: Deleting calendar event -", id);
+    return { success: true, message: "Mock delete" };
+  }
+
   try {
     const collection = await getCollection<CalendarEventDocument>(Collections.CALENDAR);
     
@@ -120,6 +144,11 @@ export async function deleteCalendarEvent(id: string) {
 }
 
 export async function completeCalendarEvent(id: string) {
+  if (!isMongoConfigured()) {
+    console.log("📅 Mock: Completing calendar event -", id);
+    return { success: true, message: "Mock complete" };
+  }
+
   try {
     const collection = await getCollection<CalendarEventDocument>(Collections.CALENDAR);
     
@@ -144,4 +173,3 @@ export async function completeCalendarEvent(id: string) {
     };
   }
 }
-

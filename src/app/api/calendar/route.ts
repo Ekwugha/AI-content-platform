@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCollection, Collections, CalendarEventDocument, ObjectId } from "@/lib/mongodb";
+import { getCollection, Collections, CalendarEventDocument, ObjectId, isMongoConfigured } from "@/lib/mongodb";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 // GET - Fetch calendar events
 export async function GET(request: NextRequest) {
+  if (!isMongoConfigured()) {
+    return NextResponse.json({
+      events: [],
+      message: "Using mock data - Database not configured",
+    });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get("start");
@@ -48,6 +56,15 @@ export async function GET(request: NextRequest) {
 
 // POST - Create calendar event
 export async function POST(request: NextRequest) {
+  if (!isMongoConfigured()) {
+    const body = await request.json();
+    return NextResponse.json({
+      id: "mock-" + Date.now(),
+      ...body,
+      message: "Mock save - Database not configured",
+    });
+  }
+
   try {
     const body = await request.json();
     
@@ -60,7 +77,7 @@ export async function POST(request: NextRequest) {
       status: body.status || "pending",
       contentId: body.contentId ? new ObjectId(body.contentId) : undefined,
       teamId: body.teamId ? new ObjectId(body.teamId) : undefined,
-      authorId: new ObjectId(), // In production, get from auth session
+      authorId: new ObjectId(),
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -83,6 +100,10 @@ export async function POST(request: NextRequest) {
 
 // PATCH - Update calendar event
 export async function PATCH(request: NextRequest) {
+  if (!isMongoConfigured()) {
+    return NextResponse.json({ success: true, message: "Mock update - Database not configured" });
+  }
+
   try {
     const body = await request.json();
     
@@ -135,6 +156,10 @@ export async function PATCH(request: NextRequest) {
 
 // DELETE - Delete calendar event
 export async function DELETE(request: NextRequest) {
+  if (!isMongoConfigured()) {
+    return NextResponse.json({ success: true, message: "Mock delete - Database not configured" });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
@@ -168,4 +193,3 @@ export async function DELETE(request: NextRequest) {
     );
   }
 }
-

@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCollection, Collections, ContentDocument, ObjectId } from "@/lib/mongodb";
+import { getCollection, Collections, ContentDocument, ObjectId, isMongoConfigured } from "@/lib/mongodb";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 // GET - Fetch all content or filter by query params
 export async function GET(request: NextRequest) {
+  // Check if MongoDB is configured
+  if (!isMongoConfigured()) {
+    return NextResponse.json({
+      items: [],
+      total: 0,
+      limit: 50,
+      offset: 0,
+      message: "Database not configured. Using mock data.",
+    });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type");
@@ -50,6 +62,16 @@ export async function GET(request: NextRequest) {
 
 // POST - Create new content
 export async function POST(request: NextRequest) {
+  if (!isMongoConfigured()) {
+    // Return mock success for development
+    const body = await request.json();
+    return NextResponse.json({
+      id: "mock-" + Date.now(),
+      ...body,
+      message: "Mock save - Database not configured",
+    });
+  }
+
   try {
     const body = await request.json();
     
@@ -61,7 +83,7 @@ export async function POST(request: NextRequest) {
       content: body.content,
       type: body.type,
       status: body.status || "draft",
-      authorId: new ObjectId(), // In production, get from auth session
+      authorId: new ObjectId(),
       metadata: {
         keywords: body.metadata?.keywords || [],
         seoTitle: body.metadata?.seoTitle,
@@ -90,4 +112,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

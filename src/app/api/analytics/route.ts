@@ -1,10 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCollection, Collections, AnalyticsDocument, ObjectId } from "@/lib/mongodb";
+import { getCollection, Collections, AnalyticsDocument, ObjectId, isMongoConfigured } from "@/lib/mongodb";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 // GET - Fetch analytics data
 export async function GET(request: NextRequest) {
+  // Return mock data if MongoDB is not configured
+  if (!isMongoConfigured()) {
+    return NextResponse.json({
+      totals: {
+        views: 24500,
+        clicks: 12800,
+        shares: 2945,
+        engagementRate: "4.2",
+      },
+      dailyStats: [],
+      message: "Using mock data - Database not configured",
+    });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get("start");
@@ -71,6 +86,10 @@ export async function GET(request: NextRequest) {
 
 // POST - Record analytics event
 export async function POST(request: NextRequest) {
+  if (!isMongoConfigured()) {
+    return NextResponse.json({ success: true, message: "Mock analytics - Database not configured" });
+  }
+
   try {
     const body = await request.json();
     
@@ -79,7 +98,6 @@ export async function POST(request: NextRequest) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Upsert - update if exists, insert if not
     await collection.updateOne(
       {
         contentId: new ObjectId(body.contentId),
@@ -110,4 +128,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
