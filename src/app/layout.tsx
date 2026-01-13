@@ -23,6 +23,10 @@ export const metadata: Metadata = {
     "copywriting",
   ],
   authors: [{ name: "AfroCreate" }],
+  icons: {
+    icon: "/favicon.svg",
+    apple: "/apple-icon.png",
+  },
   openGraph: {
     title: "AfroCreate AI - Premium AI Content Platform",
     description:
