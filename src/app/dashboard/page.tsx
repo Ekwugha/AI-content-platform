@@ -117,7 +117,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-3xl font-bold">Welcome back, Ade 👋</h1>
           <p className="text-muted-foreground mt-1">
-            Here's what's happening with your content today.
+            Here&apos;s what&apos;s happening with your content today.
           </p>
         </div>
         <Button variant="gradient" asChild>

@@ -275,7 +275,7 @@ export default function LandingPage() {
               Simple, Transparent Pricing
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Start for free, upgrade when you're ready. No hidden fees.
+              Start for free, upgrade when you&apos;re ready. No hidden fees.
             </p>
           </motion.div>
 
