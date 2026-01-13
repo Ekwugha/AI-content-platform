@@ -1,4 +1,4 @@
-import { MongoClient, Db, Collection, ObjectId } from "mongodb";
+import { MongoClient, Db, Collection, ObjectId, Document } from "mongodb";
 
 if (!process.env.MONGODB_URI) {
   throw new Error("Please add your MongoDB URI to .env.local");
@@ -31,7 +31,7 @@ export async function getDatabase(): Promise<Db> {
   return client.db(process.env.MONGODB_DB || "afrocreate");
 }
 
-export async function getCollection<T extends Document>(
+export async function getCollection<T extends Document = Document>(
   name: string
 ): Promise<Collection<T>> {
   const db = await getDatabase();
@@ -39,7 +39,7 @@ export async function getCollection<T extends Document>(
 }
 
 // Type definitions for database documents
-export interface UserDocument {
+export interface UserDocument extends Document {
   _id?: ObjectId;
   email: string;
   name: string;
@@ -55,7 +55,7 @@ export interface UserDocument {
   };
 }
 
-export interface TeamDocument {
+export interface TeamDocument extends Document {
   _id?: ObjectId;
   name: string;
   slug: string;
@@ -69,7 +69,7 @@ export interface TeamDocument {
   updatedAt: Date;
 }
 
-export interface ContentDocument {
+export interface ContentDocument extends Document {
   _id?: ObjectId;
   title: string;
   slug: string;
@@ -94,7 +94,7 @@ export interface ContentDocument {
   aiPrompt?: string;
 }
 
-export interface AnalyticsDocument {
+export interface AnalyticsDocument extends Document {
   _id?: ObjectId;
   contentId: ObjectId;
   teamId?: ObjectId;
@@ -105,7 +105,7 @@ export interface AnalyticsDocument {
   date: Date;
 }
 
-export interface CalendarEventDocument {
+export interface CalendarEventDocument extends Document {
   _id?: ObjectId;
   title: string;
   contentId?: ObjectId;
