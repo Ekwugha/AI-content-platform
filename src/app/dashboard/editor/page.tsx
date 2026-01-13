@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -18,6 +19,7 @@ import {
   Lightbulb,
   X,
   Check,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,7 +42,17 @@ import { useEditorStore, useContentStore } from "@/store";
 import { contentTypes, toneOptions, calculateReadabilityScore, calculateReadingTime, generateId } from "@/lib/utils";
 import type { ContentType, ToneOption } from "@/lib/utils";
 
-export default function EditorPage() {
+// Loading fallback for Suspense
+function EditorLoading() {
+  return (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
+}
+
+// Wrapper component to handle useSearchParams with Suspense
+function EditorContent() {
   const searchParams = useSearchParams();
   const initialType = (searchParams.get("type") as ContentType) || "blog";
   
@@ -509,6 +521,15 @@ export default function EditorPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Main export with Suspense boundary for useSearchParams
+export default function EditorPage() {
+  return (
+    <Suspense fallback={<EditorLoading />}>
+      <EditorContent />
+    </Suspense>
   );
 }
 

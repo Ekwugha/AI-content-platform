@@ -4,11 +4,18 @@ import { getCollection, Collections, ContentDocument, ObjectId, isMongoConfigure
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// Type for dynamic route params (Next.js 14.x)
+interface RouteContext {
+  params: { id: string };
+}
+
 // GET - Fetch single content by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteContext
 ) {
+  const { id } = context.params;
+  
   if (!isMongoConfigured()) {
     return NextResponse.json(
       { error: "Database not configured" },
@@ -20,7 +27,7 @@ export async function GET(
     const collection = await getCollection<ContentDocument>(Collections.CONTENT);
     
     const item = await collection.findOne({
-      _id: new ObjectId(params.id),
+      _id: new ObjectId(id),
     });
 
     if (!item) {
@@ -47,8 +54,10 @@ export async function GET(
 // PATCH - Update content
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteContext
 ) {
+  const { id } = context.params;
+  
   if (!isMongoConfigured()) {
     return NextResponse.json({ success: true, message: "Mock update - Database not configured" });
   }
@@ -77,7 +86,7 @@ export async function PATCH(
     }
 
     const result = await collection.findOneAndUpdate(
-      { _id: new ObjectId(params.id) },
+      { _id: new ObjectId(id) },
       { $set: updateData },
       { returnDocument: "after" }
     );
@@ -106,8 +115,10 @@ export async function PATCH(
 // DELETE - Delete content
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteContext
 ) {
+  const { id } = context.params;
+  
   if (!isMongoConfigured()) {
     return NextResponse.json({ success: true, message: "Mock delete - Database not configured" });
   }
@@ -116,7 +127,7 @@ export async function DELETE(
     const collection = await getCollection<ContentDocument>(Collections.CONTENT);
     
     const result = await collection.deleteOne({
-      _id: new ObjectId(params.id),
+      _id: new ObjectId(id),
     });
 
     if (result.deletedCount === 0) {
